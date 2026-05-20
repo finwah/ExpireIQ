@@ -97,18 +97,11 @@ def preprocess_for_ocr(frame):
         interpolation=cv2.INTER_CUBIC
     )
 
-    blurred = cv2.GaussianBlur(enlarged, (3, 3), 0)
+    equalized = cv2.equalizeHist(enlarged)
 
-    _, thresholded = cv2.threshold(
-        blurred,
-        0,
-        255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
+    cv2.imwrite("debug_ocr_crop.jpg", equalized)
 
-    cv2.imwrite("debug_ocr_crop.jpg", thresholded)
-
-    return [thresholded]
+    return [equalized]
 
 
 def clean_ocr_text(text):
