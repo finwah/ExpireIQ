@@ -12,3 +12,4 @@ pytesseract
 numpy
 gpiozero
 bcrypt==4.0.1
+easyocr
