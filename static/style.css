@@ -1189,3 +1189,41 @@ hr {
         text-align: left;
     }
 }
+.mobile-menu-button {
+    display: none;
+}
+
+@media (max-width: 650px) {
+    .mobile-menu-button {
+        display: inline-flex;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 16px;
+        font-size: 1.4rem;
+        background: rgba(30, 41, 59, 0.72);
+        border: 1px solid var(--border);
+        color: white;
+    }
+
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 74px;
+        right: 14px;
+        width: min(260px, calc(100vw - 28px));
+        padding: 12px;
+        border-radius: 22px;
+        background: rgba(15, 23, 42, 0.78);
+        backdrop-filter: blur(18px);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        z-index: 50;
+    }
+
+    .nav-links.show-mobile-menu {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

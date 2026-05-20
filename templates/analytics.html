@@ -181,5 +181,14 @@
             {% endif %}
         </section>
     </main>
+<script>
+    function toggleMobileMenu() {
+        const navLinks = document.querySelector(".nav-links");
+
+        if (navLinks) {
+            navLinks.classList.toggle("show-mobile-menu");
+        }
+    }
+</script>
 </body>
 </html>
