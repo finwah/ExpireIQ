@@ -1133,3 +1133,59 @@ hr {
         height: 170px;
     }
 }
+.mobile-menu-button {
+    display: none;
+}
+
+@media (max-width: 650px) {
+    .top-nav {
+        position: sticky;
+        top: 0;
+        flex-direction: row;
+        align-items: center;
+        padding: 14px 16px;
+        background: rgba(2, 6, 23, 0.72);
+        backdrop-filter: blur(16px);
+    }
+
+    .mobile-menu-button {
+        display: inline-flex;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border-radius: 16px;
+        font-size: 1.4rem;
+        background: rgba(30, 41, 59, 0.72);
+        border: 1px solid var(--border);
+        color: white;
+    }
+
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 74px;
+        right: 14px;
+        width: min(260px, calc(100vw - 28px));
+        padding: 12px;
+        border-radius: 22px;
+        background: rgba(15, 23, 42, 0.78);
+        backdrop-filter: blur(18px);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        z-index: 50;
+    }
+
+    .nav-links.show-mobile-menu {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .nav-links a {
+        background: rgba(30, 41, 59, 0.72);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 13px 14px;
+        text-align: left;
+    }
+}
