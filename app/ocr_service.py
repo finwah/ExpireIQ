@@ -3,14 +3,10 @@ import re
 from datetime import date, datetime
 
 import cv2
-import numpy as np
-import pytesseract
+import easyocr
 
 
-OCR_CONFIGS = [
-    "--psm 8",
-    "--psm 7",
-]
+reader = None
 
 
 DATE_PATTERNS = [
@@ -39,41 +35,57 @@ MONTHS = {
 }
 
 
+def get_reader():
+    global reader
+
+    if reader is None:
+        print("Loading EasyOCR reader...")
+        reader = easyocr.Reader(["en"], gpu=False)
+        print("EasyOCR reader loaded.")
+
+    return reader
+
+
 def extract_expiry_date(frame):
     if frame is None:
-        return {"raw_text": "", "date": None}
+        return {
+            "raw_text": "",
+            "date": None
+        }
 
     processed_images = preprocess_for_ocr(frame)
     best_text = ""
 
     for image in processed_images:
-        for config in OCR_CONFIGS:
-            try:
-                text = pytesseract.image_to_string(
-                    image,
-                    config=config,
-                    timeout=3
-                )
-            except RuntimeError:
-                continue
+        try:
+            results = get_reader().readtext(
+                image,
+                detail=0,
+                paragraph=False
+            )
 
-            cleaned_text = clean_ocr_text(text)
+        except Exception as e:
+            print("EasyOCR error:", e)
+            continue
 
-            print("OCR ATTEMPT:", cleaned_text)
+        text = " ".join(results)
+        cleaned_text = clean_ocr_text(text)
 
-            if len(cleaned_text) > len(best_text):
-                best_text = cleaned_text
+        print("EASYOCR RAW:", cleaned_text)
 
-            date_text = find_date_in_text(cleaned_text)
+        if len(cleaned_text) > len(best_text):
+            best_text = cleaned_text
 
-            if date_text:
-                parsed_date = normalise_date(date_text)
+        date_text = find_date_in_text(cleaned_text)
 
-                if parsed_date:
-                    return {
-                        "raw_text": cleaned_text,
-                        "date": parsed_date
-                    }
+        if date_text:
+            parsed_date = normalise_date(date_text)
+
+            if parsed_date:
+                return {
+                    "raw_text": cleaned_text,
+                    "date": parsed_date
+                }
 
     return {
         "raw_text": best_text,
@@ -86,17 +98,17 @@ def preprocess_for_ocr(frame):
 
     height, width = gray.shape
 
-    # Wider and lower crop so the expiry date stays inside the image.
-    cropped = gray[
-        int(height * 0.22):int(height * 0.58),
-        int(width * 0.12):int(width * 0.82)
+    # Crop around the expiry area while leaving enough room for aiming variation.
+    expiry_crop = gray[
+        int(height * 0.18):int(height * 0.60),
+        int(width * 0.10):int(width * 0.85)
     ]
 
     enlarged = cv2.resize(
-        cropped,
+        expiry_crop,
         None,
-        fx=2.5,
-        fy=2.5,
+        fx=2,
+        fy=2,
         interpolation=cv2.INTER_CUBIC
     )
 
@@ -107,9 +119,10 @@ def preprocess_for_ocr(frame):
     cv2.imwrite("debug_ocr_crop.jpg", blurred)
 
     return [
-        cropped,
+        expiry_crop,
         enlarged,
-        blurred
+        blurred,
+        gray
     ]
 
 
