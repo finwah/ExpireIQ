@@ -987,3 +987,149 @@ hr {
         text-align: left;
     }
 }
+@media (max-width: 650px) {
+    body {
+        font-size: 15px;
+    }
+
+    .top-nav {
+        position: static;
+        padding: 18px;
+    }
+
+    .brand {
+        font-size: 1.45rem;
+    }
+
+    .nav-links {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .nav-links a {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    main {
+        margin: 18px auto;
+        padding: 0 14px 32px;
+    }
+
+    .hero,
+    .page-header {
+        padding: 24px;
+        border-radius: 24px;
+    }
+
+    .hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hero-title-row {
+        align-items: flex-start;
+    }
+
+    .dashboard-clock {
+        text-align: left;
+    }
+
+    .appliance-mode h1,
+    h1 {
+        font-size: 2.1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        min-height: 120px;
+        padding: 20px;
+    }
+
+    .stat-card strong {
+        font-size: 1.8rem;
+    }
+
+    .grid-two,
+    .scanner-layout,
+    .recipe-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 20px;
+        border-radius: 22px;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .list-row,
+    .shopping-row {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 18px;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 760px;
+    }
+
+    .inventory-filters,
+    .toolbar,
+    .inline-form,
+    .shopping-update-form,
+    .button-row,
+    .actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .field.compact,
+    .small-field {
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+
+    button,
+    .button-link {
+        width: 100%;
+    }
+
+    .camera-wrapper {
+        border-radius: 20px;
+    }
+
+    .guide-box {
+        left: 12%;
+        width: 76%;
+    }
+
+    .recipe-card {
+        grid-template-columns: 1fr;
+    }
+
+    .donut-chart,
+    .performance-circle {
+        width: 170px;
+        height: 170px;
+    }
+}
