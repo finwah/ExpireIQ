@@ -1,10 +1,16 @@
 import calendar
 import re
-from datetime import datetime, date
+from datetime import date, datetime
 
 import cv2
 import numpy as np
 import pytesseract
+
+
+OCR_CONFIG = (
+    "--psm 7 "
+    "-c tessedit_char_whitelist=0123456789/-.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+)
 
 
 DATE_PATTERNS = [
@@ -16,12 +22,6 @@ DATE_PATTERNS = [
     r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s?\d{2,4}\b",
 ]
 
-OCR_CONFIGS = [
-    "--psm 6",
-    "--psm 7",
-    "--psm 11",
-    "--psm 13",
-]
 
 MONTHS = {
     "jan": 1, "january": 1,
@@ -47,23 +47,30 @@ def extract_expiry_date(frame):
     best_text = ""
 
     for image in processed_images:
-        for config in OCR_CONFIGS:
-            text = pytesseract.image_to_string(image, config=config)
-            cleaned_text = clean_ocr_text(text)
+        try:
+            text = pytesseract.image_to_string(
+                image,
+                config=OCR_CONFIG,
+                timeout=4
+            )
+        except RuntimeError:
+            continue
 
-            if len(cleaned_text) > len(best_text):
-                best_text = cleaned_text
+        cleaned_text = clean_ocr_text(text)
 
-            date_text = find_date_in_text(cleaned_text)
+        if len(cleaned_text) > len(best_text):
+            best_text = cleaned_text
 
-            if date_text:
-                parsed_date = normalise_date(date_text)
+        date_text = find_date_in_text(cleaned_text)
 
-                if parsed_date:
-                    return {
-                        "raw_text": cleaned_text,
-                        "date": parsed_date
-                    }
+        if date_text:
+            parsed_date = normalise_date(date_text)
+
+            if parsed_date:
+                return {
+                    "raw_text": cleaned_text,
+                    "date": parsed_date
+                }
 
     return {
         "raw_text": best_text,
@@ -74,11 +81,24 @@ def extract_expiry_date(frame):
 def preprocess_for_ocr(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    height, width = gray.shape
+
+    crop_width = int(width * 0.45)
+    crop_height = int(height * 0.18)
+
+    x1 = (width - crop_width) // 2
+    y1 = (height - crop_height) // 2
+
+    cropped = gray[
+        y1:y1 + crop_height,
+        x1:x1 + crop_width
+    ]
+
     enlarged = cv2.resize(
-        gray,
+        cropped,
         None,
-        fx=3,
-        fy=3,
+        fx=2,
+        fy=2,
         interpolation=cv2.INTER_CUBIC
     )
 
@@ -89,33 +109,19 @@ def preprocess_for_ocr(frame):
     ])
 
     sharpened = cv2.filter2D(enlarged, -1, sharpen_kernel)
-    blurred = cv2.GaussianBlur(sharpened, (3, 3), 0)
 
-    _, otsu = cv2.threshold(
-        blurred,
+    _, thresholded = cv2.threshold(
+        sharpened,
         0,
         255,
         cv2.THRESH_BINARY + cv2.THRESH_OTSU
     )
 
-    adaptive = cv2.adaptiveThreshold(
-        sharpened,
-        255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        31,
-        2
-    )
-
-    inverted = cv2.bitwise_not(otsu)
+    inverted = cv2.bitwise_not(thresholded)
 
     return [
-        gray,
-        enlarged,
-        sharpened,
-        otsu,
-        adaptive,
-        inverted
+        thresholded,
+        inverted,
     ]
 
 
@@ -309,5 +315,7 @@ def safe_int(value):
 
 
 def is_reasonable_expiry_date(parsed_date):
-    current_year = date.today().year
-    return current_year - 1 <= parsed_date.year <= current_year + 10
+    today = date.today()
+    max_year = today.year + 10
+
+    return parsed_date >= today and parsed_date.year <= max_year

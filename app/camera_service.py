@@ -1,62 +1,75 @@
 import cv2
 import numpy as np
-import time
-
-try:
-    from picamera2 import Picamera2
-    PICAMERA_AVAILABLE = True
-except Exception:
-    PICAMERA_AVAILABLE = False
 
 
 class CameraService:
     def __init__(self):
         self.camera = None
-        self.last_frame = None
+        self.available = False
+        self._start_camera()
 
-        if PICAMERA_AVAILABLE:
+    def _start_camera(self):
+        try:
+            from picamera2 import Picamera2
+
             self.camera = Picamera2()
+
             config = self.camera.create_preview_configuration(
-                main={"size": (1920, 1080)}
+                main={"size": (1280, 720), "format": "RGB888"}
             )
+
             self.camera.configure(config)
             self.camera.start()
-            time.sleep(1)
 
-    def get_frame(self):
-        if self.camera:
+            self.available = True
+            print("Pi camera started successfully.")
+
+        except Exception as e:
+            self.available = False
+            self.camera = None
+            print("Camera not available:", e)
+
+    def capture_image(self):
+        if not self.available or self.camera is None:
+            return self._fallback_frame()
+
+        try:
             frame = self.camera.capture_array()
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        else:
-            frame = self._mock_frame()
 
-        self.last_frame = frame
-        return frame
+            if frame is None:
+                return self._fallback_frame()
+
+            return cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        except Exception as e:
+            print("Camera capture failed:", e)
+            return self._fallback_frame()
 
     def get_jpeg_frame(self):
-        frame = self.get_frame()
+        frame = self.capture_image()
 
-        success, jpeg = cv2.imencode(".jpg", frame)
+        success, buffer = cv2.imencode(".jpg", frame)
 
         if not success:
             return None
 
-        return jpeg.tobytes()
+        return buffer.tobytes()
 
-    def capture_image(self):
-        return self.get_frame()
+    def _fallback_frame(self):
+        frame = np.zeros((720, 1280, 3), dtype=np.uint8)
 
-    def _mock_frame(self):
-        frame = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.rectangle(frame, (330, 270), (950, 450), (56, 189, 248), 4)
         cv2.putText(
             frame,
             "Camera not available",
-            (130, 230),
+            (360, 380),
             cv2.FONT_HERSHEY_SIMPLEX,
-            1,
+            1.5,
             (255, 255, 255),
-            2
+            3,
+            cv2.LINE_AA
         )
+
         return frame
 
 

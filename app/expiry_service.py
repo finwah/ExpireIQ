@@ -1,7 +1,6 @@
 from datetime import date
 
 
-# Converts expiry dates into simple status labels.
 def expiry_status(expiration_date):
     if expiration_date is None:
         return "unknown"
@@ -21,7 +20,6 @@ def expiry_status(expiration_date):
     return "safe"
 
 
-# Creates readable expiry text for the UI.
 def expiry_label(expiration_date):
     if expiration_date is None:
         return "No date"

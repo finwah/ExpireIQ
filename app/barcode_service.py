@@ -1,15 +1,15 @@
-from pyzbar.pyzbar import decode
 import cv2
 import numpy as np
+from pyzbar.pyzbar import decode
 
 
 def detect_barcode(frame):
     if frame is None:
         return None
 
-    processed_images = build_barcode_attempts(frame)
+    attempts = build_barcode_attempts(frame)
 
-    for image in processed_images:
+    for image in attempts:
         decoded_codes = decode(image)
 
         if decoded_codes:
@@ -21,8 +21,15 @@ def detect_barcode(frame):
 def build_barcode_attempts(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    height, width = gray.shape
+
+    center_crop = gray[
+        int(height * 0.18):int(height * 0.82),
+        int(width * 0.10):int(width * 0.90)
+    ]
+
     enlarged = cv2.resize(
-        gray,
+        center_crop,
         None,
         fx=1.8,
         fy=1.8,
@@ -37,6 +44,13 @@ def build_barcode_attempts(frame):
 
     sharpened = cv2.filter2D(enlarged, -1, sharpen_kernel)
 
+    _, otsu = cv2.threshold(
+        sharpened,
+        0,
+        255,
+        cv2.THRESH_BINARY + cv2.THRESH_OTSU
+    )
+
     adaptive = cv2.adaptiveThreshold(
         sharpened,
         255,
@@ -46,18 +60,11 @@ def build_barcode_attempts(frame):
         2
     )
 
-    _, otsu = cv2.threshold(
-        sharpened,
-        0,
-        255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
-
     return [
-        frame,
         gray,
+        center_crop,
         enlarged,
         sharpened,
+        otsu,
         adaptive,
-        otsu
     ]
