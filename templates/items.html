@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inventory - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Inventory</p>
+                <h1>Fridge Inventory</h1>
+                <p class="muted">Search, filter, sort, edit quantities, product sizes, and expiry dates.</p>
+            </div>
+
+            <a class="button-link primary" href="/scan">Add Item</a>
+        </section>
+
+        <section class="card">
+            <form method="get" class="inventory-filters">
+                <div class="field compact">
+                    <label for="search">Search</label>
+                    <input
+                        id="search"
+                        type="search"
+                        name="search"
+                        placeholder="Search by product, brand, size, category..."
+                        value="{{ search }}"
+                    >
+                </div>
+
+                <div class="field compact">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="">All categories</option>
+
+                        {% for category in categories %}
+                            <option
+                                value="{{ category }}"
+                                {% if selected_category == category %}selected{% endif %}
+                            >
+                                {{ category }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="field compact">
+                    <label for="sort">Sort</label>
+                    <select id="sort" name="sort">
+                        <option value="expiry" {% if sort == "expiry" %}selected{% endif %}>
+                            Expiry date
+                        </option>
+
+                        <option value="name" {% if sort == "name" %}selected{% endif %}>
+                            Product name
+                        </option>
+
+                        <option value="quantity" {% if sort == "quantity" %}selected{% endif %}>
+                            Quantity
+                        </option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit">Apply Filters</button>
+                    <a class="button-link secondary" href="/items">Clear</a>
+                </div>
+            </form>
+
+            {% if items %}
+                <div class="table-wrapper">
+                    <table id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Size</th>
+                                <th>Barcode</th>
+                                <th>Brand</th>
+                                <th>Category</th>
+                                <th>Expiry</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td><strong>{{ item.product.name }}</strong></td>
+                                    <td>{{ item.product.size or "-" }}</td>
+                                    <td>{{ item.product.barcode }}</td>
+                                    <td>{{ item.product.brand or "-" }}</td>
+                                    <td>
+                                        <span title="{{ item.product.full_category or item.product.category or '' }}">
+                                            {{ item.product.category or "-" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ expiry_status(item.expiration_date) }}">
+                                            {{ expiry_label(item.expiration_date) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="quantity-pill">x{{ item.quantity }}</span>
+                                    </td>
+                                    <td class="actions">
+                                        <a class="small-link" href="/items/{{ item.id }}/edit">Edit</a>
+
+                                        <form method="post" action="/items/{{ item.id }}/edit">
+                                            <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                                            <input type="hidden" name="expiration_date" value="{{ item.expiration_date or '' }}">
+                                            <input type="hidden" name="action" value="shopping">
+                                            <button class="secondary small" type="submit">Add to List</button>
+                                        </form>
+
+                                        <form method="post" action="/delete-item/{{ item.id }}">
+                                            <button class="delete small" type="submit">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-state">No matching items found.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Item - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Edit Inventory</p>
+                <h1>{{ item.product.name }}</h1>
+                <p class="muted">{{ item.product.brand or "No brand" }} · {{ item.product.barcode }}</p>
+            </div>
+            <a class="button-link secondary" href="/items">Back to Inventory</a>
+        </section>
+
+        <section class="card form-card">
+            <form method="post" action="/items/{{ item.id }}/edit">
+                <div class="field">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="0" required>
+                    <small>Set quantity to 0 to remove this item.</small>
+                </div>
+
+                <div class="field">
+                    <label>Expiry Date</label>
+                    <input type="date" name="expiration_date" value="{{ item.expiration_date or '' }}">
+                </div>
+
+                <input type="hidden" name="action" value="save">
+
+                <div class="button-row">
+                    <button type="submit" class="primary">Save Changes</button>
+                </div>
+            </form>
+
+            <hr>
+
+            <form method="post" action="/items/{{ item.id }}/edit">
+                <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                <input type="hidden" name="expiration_date" value="{{ item.expiration_date or '' }}">
+                <input type="hidden" name="action" value="shopping">
+                <button type="submit" class="secondary">Add to Shopping List</button>
+            </form>
+
+            <form method="post" action="/items/{{ item.id }}/edit">
+                <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                <input type="hidden" name="expiration_date" value="{{ item.expiration_date or '' }}">
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="delete">Delete Item</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

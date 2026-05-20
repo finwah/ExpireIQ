@@ -1,0 +1,14 @@
+﻿fastapi
+uvicorn
+sqlalchemy
+jinja2
+python-multipart
+requests
+passlib[bcrypt]
+itsdangerous
+opencv-python-headless
+pyzbar
+pytesseract
+numpy
+gpiozero
+bcrypt==4.0.1

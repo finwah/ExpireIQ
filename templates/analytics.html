@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analytics - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Insights</p>
+                <h1>Analytics Dashboard</h1>
+                <p class="muted">Track inventory health, expiry risk, category spread, and scanner performance.</p>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <span>Fridge Health</span>
+                <strong>{{ analytics.health_score }}%</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Total Quantity</span>
+                <strong>{{ analytics.total_quantity }}</strong>
+            </article>
+
+            <article class="stat-card warning">
+                <span>Expiry Risk</span>
+                <strong>{{ analytics.expiry_risk }}</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Scan Success</span>
+                <strong>{{ analytics.scan_success_rate }}%</strong>
+            </article>
+        </section>
+
+        <section class="grid-two">
+            <article class="card chart-card">
+                <div class="section-heading">
+                    <h2>Inventory Health</h2>
+                </div>
+
+                <div class="performance-ring">
+                    <div class="performance-circle" style="--scan-success: {{ analytics.health_score }}%;">
+                        <span>{{ analytics.health_score }}%</span>
+                    </div>
+
+                    <p class="muted">Higher is better. Expired and urgent items reduce this score.</p>
+                </div>
+            </article>
+
+            <article class="card chart-card">
+                <div class="section-heading">
+                    <h2>Scanner Performance</h2>
+                </div>
+
+                <div class="performance-ring">
+                    <div class="performance-circle" style="--scan-success: {{ analytics.scan_success_rate }}%;">
+                        <span>{{ analytics.scan_success_rate }}%</span>
+                    </div>
+
+                    <p class="muted">Successful barcode and expiry scan rate.</p>
+                </div>
+            </article>
+        </section>
+
+        <section class="grid-two">
+            <article class="card">
+                <div class="section-heading">
+                    <h2>Expiry Breakdown</h2>
+                </div>
+
+                {% set total_expiry = analytics.safe + analytics.soon + analytics.urgent + analytics.expired + analytics.unknown %}
+                {% if total_expiry == 0 %}
+                    {% set total_expiry = 1 %}
+                {% endif %}
+
+                <div class="donut-card">
+                    <div class="donut-chart"
+                         style="
+                            --safe: {{ (analytics.safe / total_expiry) * 100 }}%;
+                            --soon: {{ ((analytics.safe + analytics.soon) / total_expiry) * 100 }}%;
+                            --urgent: {{ ((analytics.safe + analytics.soon + analytics.urgent) / total_expiry) * 100 }}%;
+                            --expired: {{ ((analytics.safe + analytics.soon + analytics.urgent + analytics.expired) / total_expiry) * 100 }}%;
+                         ">
+                        <span>{{ analytics.expiry_risk }}</span>
+                    </div>
+
+                    <p class="muted">Items that are expired, urgent, or expiring soon.</p>
+                </div>
+
+                <div class="analytics-stack">
+                    <div class="analytics-row"><span>Safe</span><strong>{{ analytics.safe }}</strong></div>
+                    <div class="analytics-row"><span>Expiring Soon</span><strong>{{ analytics.soon }}</strong></div>
+                    <div class="analytics-row"><span>Urgent</span><strong>{{ analytics.urgent }}</strong></div>
+                    <div class="analytics-row"><span>Expired</span><strong>{{ analytics.expired }}</strong></div>
+                    <div class="analytics-row"><span>Unknown Date</span><strong>{{ analytics.unknown }}</strong></div>
+                </div>
+            </article>
+
+            <article class="card">
+                <div class="section-heading">
+                    <h2>Scan Summary</h2>
+                </div>
+
+                <div class="analytics-stack">
+                    <div class="analytics-row"><span>Total Scans</span><strong>{{ analytics.total_scans }}</strong></div>
+                    <div class="analytics-row"><span>Successful Scans</span><strong>{{ analytics.successful_scans }}</strong></div>
+                    <div class="analytics-row"><span>Failed Scans</span><strong>{{ analytics.failed_scans }}</strong></div>
+                    <div class="analytics-row"><span>Most Common Category</span><strong>{{ analytics.most_common_category }}</strong></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <h2>Category Breakdown</h2>
+            </div>
+
+            {% if analytics.category_data %}
+                <div class="bar-list">
+                    {% for category in analytics.category_data %}
+                        <div class="bar-row">
+                            <div class="bar-label">
+                                <strong>{{ category.name }}</strong>
+                                <span>{{ category.count }} item(s)</span>
+                            </div>
+
+                            <div class="bar-track">
+                                <div class="bar-fill" style="width: {{ category.percent }}%;"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No category data yet. Scan or add items to build analytics.</p>
+            {% endif %}
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <h2>Recent Scan Activity</h2>
+            </div>
+
+            {% if scan_logs %}
+                <div class="item-list">
+                    {% for log in scan_logs %}
+                        <div class="list-row">
+                            <div>
+                                <strong>{{ scan_type_label(log.scan_type) }}</strong>
+                                <p>{{ log.raw_result or "No result stored" }}</p>
+                            </div>
+
+                            {% if log.success %}
+                                <span class="badge safe">Success</span>
+                            {% else %}
+                                <span class="badge expired">Failed</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">No scan history yet.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

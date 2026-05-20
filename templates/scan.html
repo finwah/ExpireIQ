@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan Item - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Scanner</p>
+                <h1>Scan Item</h1>
+                <p class="muted">Scan barcodes, capture expiry dates, and keep your food inventory up to date.</p>
+            </div>
+        </section>
+
+        <section class="scanner-layout">
+            <article class="card">
+                <h2>Camera Preview</h2>
+
+                <div class="camera-wrapper">
+                    <img id="camera-feed" src="/video-feed" alt="Camera feed">
+                    <div class="guide-box"></div>
+                </div>
+
+                <p id="instruction" class="scan-instruction">
+                    Place the barcode inside the guide box, then press Capture Barcode.
+                </p>
+            </article>
+
+            <article class="card">
+                <div class="step-header">
+                    <span>1</span>
+                    <h2>Barcode</h2>
+                </div>
+
+                <button id="capture-barcode" type="button">Capture Barcode</button>
+                <p id="barcode-message" class="message"></p>
+
+                <div class="field">
+                    <label>Barcode</label>
+                    <input id="barcode" type="text" placeholder="Enter or scan barcode">
+                </div>
+
+                <button type="button" class="secondary" onclick="fetchProductFromBarcode()">
+                    Fetch Product
+                </button>
+
+                <div class="step-header">
+                    <span>2</span>
+                    <h2>Product Details</h2>
+                </div>
+
+                <div class="field">
+                    <label>Product Name</label>
+                    <input id="name" type="text">
+                </div>
+
+                <div class="field">
+                    <label>Brand</label>
+                    <input id="brand" type="text">
+                </div>
+
+                <div class="field">
+                    <label>Product Size</label>
+                    <input id="size" type="text" placeholder="e.g. 2L, 500g, 6 eggs">
+                </div>
+
+                <div class="field">
+                    <label>Category</label>
+                    <input id="category" type="text">
+                </div>
+
+                <input id="full-category" type="hidden">
+
+                <div class="step-header">
+                    <span>3</span>
+                    <h2>Expiry Date</h2>
+                </div>
+
+                <button id="capture-expiry" type="button">Capture Expiry Date</button>
+                <p id="expiry-message" class="message"></p>
+
+                <div class="field">
+                    <label>Expiry Date</label>
+                    <input id="expiration-date" type="date">
+                </div>
+
+                <div class="quick-date-buttons">
+                    <button type="button" onclick="setExpiryDays(3)">+3 Days</button>
+                    <button type="button" onclick="setExpiryDays(7)">+1 Week</button>
+                    <button type="button" onclick="setExpiryDays(14)">+2 Weeks</button>
+                </div>
+
+                <div class="step-header">
+                    <span>4</span>
+                    <h2>Quantity and Save</h2>
+                </div>
+
+                <div class="field">
+                    <label>Quantity</label>
+                    <input id="quantity" type="number" min="1" value="1">
+                </div>
+
+                <div class="button-row">
+                    <button id="save-item" type="button" class="primary">Save Item</button>
+                    <button id="save-and-next" type="button" class="secondary">Save and Scan Next</button>
+                </div>
+
+                <p id="save-message" class="message"></p>
+            </article>
+        </section>
+    </main>
+
+    <script src="/static/scan.js"></script>
+<script>
+    let inactivityTimer;
+
+    function resetTimer() {
+        clearTimeout(inactivityTimer);
+
+        inactivityTimer = setTimeout(() => {
+            window.location.href = "/dashboard";
+        }, 120000);
+    }
+
+    document.addEventListener("mousemove", resetTimer);
+    document.addEventListener("click", resetTimer);
+    document.addEventListener("keypress", resetTimer);
+
+    resetTimer();
+</script>
+</body>
+</html>

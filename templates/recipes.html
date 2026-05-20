@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recipe Suggestions - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Smart Suggestions</p>
+                <h1>Recipe Suggestions</h1>
+                <p class="muted">
+                    Meal ideas are ranked using your inventory and expiry dates.
+                </p>
+            </div>
+
+            <a class="button-link primary" href="/items">View Inventory</a>
+        </section>
+
+        <section class="recipe-grid">
+            {% for suggestion in suggestions %}
+                <article class="card recipe-card {% if suggestion.expiry_priority %}priority-recipe{% endif %}">
+                    <div class="recipe-icon">
+                        {% if suggestion.expiry_priority %}
+                            ⚡
+                        {% else %}
+                            🍽️
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <div class="recipe-title-row">
+                            <h2>{{ suggestion.title }}</h2>
+
+                            {% if suggestion.expiry_priority %}
+                                <span class="badge urgent">Use Soon</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="muted">{{ suggestion.description }}</p>
+
+                        <div class="recipe-meta">
+                            <span>{{ suggestion.time }}</span>
+                            <span>{{ suggestion.difficulty }}</span>
+                            <span>{{ suggestion.match_score }}% match</span>
+                        </div>
+
+                        <div class="recipe-score">
+                            <div class="recipe-score-fill" style="width: {{ suggestion.match_score }}%;"></div>
+                        </div>
+
+                        <div class="recipe-info">
+                            <strong>Available ingredients</strong>
+
+                            {% if suggestion.matched_required or suggestion.matched_optional %}
+                                <p>
+                                    {{ (suggestion.matched_required + suggestion.matched_optional)|join(", ")|title }}
+                                </p>
+                            {% else %}
+                                <p>No matching ingredients yet.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="recipe-info">
+                            <strong>Missing ingredients</strong>
+
+                            {% if suggestion.missing_required or suggestion.missing_optional %}
+                                <p>
+                                    {{ (suggestion.missing_required + suggestion.missing_optional)|join(", ")|title }}
+                                </p>
+                            {% else %}
+                                <p>You appear to have the key ingredients.</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="recipe-info">
+                            <strong>Why this was suggested</strong>
+                            <p>{{ suggestion.reason }}</p>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html>

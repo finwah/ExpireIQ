@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shopping List - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="page-header">
+            <div>
+                <p class="eyebrow">Plan Ahead</p>
+                <h1>Shopping List</h1>
+                <p class="muted">Add items manually or from your inventory.</p>
+            </div>
+        </section>
+
+        <section class="card form-card">
+            <h2>Add Shopping Item</h2>
+
+            <form method="post" action="/shopping-list/add" class="inline-form">
+                <div class="field">
+                    <label>Item Name</label>
+                    <input type="text" name="name" placeholder="e.g. Milk" required>
+                </div>
+
+                <div class="field small-field">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" value="1" min="1" required>
+                </div>
+
+                <div class="field">
+                    <label>Category</label>
+                    <input type="text" name="category" placeholder="e.g. Dairy">
+                </div>
+
+                <button type="submit" class="primary">Add</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Your List</h2>
+
+            {% if shopping_items %}
+                <div class="shopping-list">
+                    {% for item in shopping_items %}
+                        <div class="shopping-row {% if item.completed %}completed{% endif %}">
+                            <form method="post" action="/shopping-list/{{ item.id }}/update" class="shopping-update-form">
+                                <input type="hidden" name="completed" value="{{ 0 if item.completed else 1 }}">
+
+                                <div>
+                                    <strong>{{ item.name }}</strong>
+                                    <p>{{ item.category or "No category" }}</p>
+                                </div>
+
+                                <input class="quantity-input" type="number" name="quantity" value="{{ item.quantity }}" min="1">
+
+                                <button class="secondary small" type="submit">
+                                    {% if item.completed %}Mark Needed{% else %}Mark Bought{% endif %}
+                                </button>
+                            </form>
+
+                            <form method="post" action="/shopping-list/{{ item.id }}/delete">
+                                <button class="delete small" type="submit">Remove</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state">Nothing on the shopping list yet.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

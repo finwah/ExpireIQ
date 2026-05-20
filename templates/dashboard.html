@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - ExpireIQ</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="appliance-mode">
+    <nav class="top-nav">
+        <div class="brand">ExpireIQ</div>
+        <div class="nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/scan">Scan Item</a>
+            <a href="/items">Inventory</a>
+            <a href="/analytics">Analytics</a>
+            <a href="/recipes">Recipes</a>
+            <a href="/shopping-list">Shopping List</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div>
+                <p class="eyebrow">Welcome back</p>
+
+                <div class="hero-title-row">
+                    <h1>{{ user.username }}'s ExpireIQ</h1>
+                    
+                    <div class="dashboard-clock">
+                        <span id="live-clock">--:--</span>
+                        <p id="live-date"></p>
+                    </div>
+                </div>
+
+                <p class="muted">
+                    Track your food, expiry dates, and shopping list from one place.
+                </p>
+            </div>
+
+            <a class="button-link primary" href="/scan">Scan New Item</a>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <span>Total Entries</span>
+                <strong>{{ stats.total_entries }}</strong>
+            </article>
+
+            <article class="stat-card">
+                <span>Total Quantity</span>
+                <strong>{{ stats.total_quantity }}</strong>
+            </article>
+
+            <article class="stat-card warning">
+                <span>Expiring Soon</span>
+                <strong>{{ stats.expiring_soon }}</strong>
+            </article>
+
+            <article class="stat-card danger">
+                <span>Expired</span>
+                <strong>{{ stats.expired }}</strong>
+            </article>
+        </section>
+
+        <section class="grid-two">
+            <article class="card">
+                <div class="section-heading">
+                    <h2>Use These Soon</h2>
+                    <a href="/items">View all</a>
+                </div>
+
+                {% set soon_items = [] %}
+                {% for item in items %}
+                    {% if expiry_status(item.expiration_date) in ["expired", "urgent", "soon"] %}
+                        {% set _ = soon_items.append(item) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% if soon_items %}
+                    <div class="item-list">
+                        {% for item in soon_items[:6] %}
+                            <div class="list-row">
+                                <div>
+                                    <strong>{{ item.product.name }}</strong>
+                                    <p>{{ item.product.brand or "No brand" }}</p>
+                                </div>
+                                <span class="badge {{ expiry_status(item.expiration_date) }}">
+                                    {{ expiry_label(item.expiration_date) }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-state">Nothing is expiring soon.</p>
+                {% endif %}
+            </article>
+
+            <article class="card">
+                <div class="section-heading">
+                    <h2>Shopping List</h2>
+                    <a href="/shopping-list">Manage</a>
+                </div>
+
+                {% if shopping_items %}
+                    <div class="item-list">
+                        {% for shopping_item in shopping_items[:6] %}
+                            <div class="list-row {% if shopping_item.completed %}completed{% endif %}">
+                                <div>
+                                    <strong>{{ shopping_item.name }}</strong>
+                                    <p>{{ shopping_item.category or "No category" }}</p>
+                                </div>
+                                <span class="quantity-pill">x{{ shopping_item.quantity }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-state">Your shopping list is empty.</p>
+                {% endif %}
+            </article>
+        </section>
+
+        <section class="card">
+            <div class="section-heading">
+                <h2>Newest Inventory</h2>
+                <a href="/items">Open inventory</a>
+            </div>
+
+            {% if items %}
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Brand</th>
+                                <th>Expiry</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in items[:5] %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.product.brand or "-" }}</td>
+                                    <td>
+                                        <span class="badge {{ expiry_status(item.expiration_date) }}">
+                                            {{ expiry_label(item.expiration_date) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-state">No items added yet.</p>
+            {% endif %}
+        </section>
+    </main>
+<script>
+    function updateClock() {
+        const now = new Date();
+
+        const clock = document.getElementById("live-clock");
+        const date = document.getElementById("live-date");
+
+        if (clock) {
+            clock.textContent = now.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+        if (date) {
+            date.textContent = now.toLocaleDateString([], {
+                weekday: "long",
+                month: "long",
+                day: "numeric"
+            });
+        }
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    setInterval(() => {
+        window.location.reload();
+    }, 30000);
+</script>
+</body>
+</html>
