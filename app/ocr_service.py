@@ -8,9 +8,8 @@ import pytesseract
 
 
 OCR_CONFIGS = [
-    "--psm 8 -c tessedit_char_whitelist=0123456789/",
-    "--psm 7 -c tessedit_char_whitelist=0123456789/",
-    "--psm 6 -c tessedit_char_whitelist=0123456789/",
+    "--psm 8",
+    "--psm 7",
 ]
 
 
@@ -87,9 +86,10 @@ def preprocess_for_ocr(frame):
 
     height, width = gray.shape
 
-    # Focus ONLY on upper-middle area
+    # Focus on the upper-middle area where expiry dates usually appear.
+    # This avoids reading large batch codes lower down on the packaging.
     cropped = gray[
-        int(height * 0.22):int(height * 0.45),
+        int(height * 0.16):int(height * 0.40),
         int(width * 0.18):int(width * 0.72)
     ]
 
@@ -103,11 +103,15 @@ def preprocess_for_ocr(frame):
 
     equalized = cv2.equalizeHist(enlarged)
 
-    cv2.imwrite("debug_ocr_crop.jpg", equalized)
+    blurred = cv2.GaussianBlur(equalized, (3, 3), 0)
 
-    return [cropped,
-            enlarged,
-            equalized,]
+    cv2.imwrite("debug_ocr_crop.jpg", blurred)
+
+    return [
+        cropped,
+        enlarged,
+        blurred
+    ]
 
 
 def clean_ocr_text(text):
