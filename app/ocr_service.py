@@ -8,7 +8,7 @@ import pytesseract
 
 
 OCR_CONFIG = (
-    "--psm 7 "
+    "--psm 8 "
     "-c tessedit_char_whitelist=0123456789/-.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 )
 
