@@ -17,7 +17,7 @@ class CameraService:
         if PICAMERA_AVAILABLE:
             self.camera = Picamera2()
             config = self.camera.create_preview_configuration(
-                main={"size": (640, 480)}
+                main={"size": (1920, 1080)}
             )
             self.camera.configure(config)
             self.camera.start()
