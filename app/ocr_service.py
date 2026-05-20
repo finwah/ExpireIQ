@@ -129,6 +129,7 @@ def preprocess_for_ocr(frame):
         processed_images.append(sharpened)
         processed_images.append(thresholded)
 
+    cv2.imwrite("debug_ocr_crop.jpg", processed_images[0])
     return processed_images[:4]
 
 
