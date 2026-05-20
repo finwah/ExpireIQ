@@ -86,18 +86,17 @@ def preprocess_for_ocr(frame):
 
     height, width = gray.shape
 
-    # Focus on the upper-middle area where expiry dates usually appear.
-    # This avoids reading large batch codes lower down on the packaging.
+    # Wider and lower crop so the expiry date stays inside the image.
     cropped = gray[
-        int(height * 0.16):int(height * 0.40),
-        int(width * 0.18):int(width * 0.72)
+        int(height * 0.22):int(height * 0.58),
+        int(width * 0.12):int(width * 0.82)
     ]
 
     enlarged = cv2.resize(
         cropped,
         None,
-        fx=3,
-        fy=3,
+        fx=2.5,
+        fy=2.5,
         interpolation=cv2.INTER_CUBIC
     )
 
