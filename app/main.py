@@ -1,4 +1,5 @@
 from datetime import date
+from unittest import result
 
 from fastapi import FastAPI, Depends, Request, Form
 from fastapi.responses import RedirectResponse, StreamingResponse, JSONResponse
@@ -516,6 +517,8 @@ def capture_expiry(request: Request, db: Session = Depends(get_db)):
         led_service.off()
 
     result = extract_expiry_date(frame)
+    print("OCR RAW TEXT:", result.get("raw_text"))
+    print("OCR DATE:", result.get("date"))
 
     crud.log_scan(
         db,
