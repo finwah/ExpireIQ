@@ -8,18 +8,13 @@ import pytesseract
 
 
 DATE_PATTERNS = [
-    # Full numeric dates
     r"\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b",
     r"\b\d{4}[\/\-.]\d{1,2}[\/\-.]\d{1,2}\b",
-
-    # Month/year only, e.g. 11/26 or 11-2026
     r"\b\d{1,2}[\/\-]\d{2,4}\b",
-
-    # Text month dates, e.g. 26 NOV 2026 or NOV 2026
+    r"\b\d{4}\b",
     r"\b\d{1,2}\s?(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s?\d{2,4}\b",
     r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\s?\d{2,4}\b",
 ]
-
 
 OCR_CONFIGS = [
     "--psm 6",
@@ -28,44 +23,27 @@ OCR_CONFIGS = [
     "--psm 13",
 ]
 
-
 MONTHS = {
-    "jan": 1,
-    "january": 1,
-    "feb": 2,
-    "february": 2,
-    "mar": 3,
-    "march": 3,
-    "apr": 4,
-    "april": 4,
+    "jan": 1, "january": 1,
+    "feb": 2, "february": 2,
+    "mar": 3, "march": 3,
+    "apr": 4, "april": 4,
     "may": 5,
-    "jun": 6,
-    "june": 6,
-    "jul": 7,
-    "july": 7,
-    "aug": 8,
-    "august": 8,
-    "sep": 9,
-    "sept": 9,
-    "september": 9,
-    "oct": 10,
-    "october": 10,
-    "nov": 11,
-    "november": 11,
-    "dec": 12,
-    "december": 12,
+    "jun": 6, "june": 6,
+    "jul": 7, "july": 7,
+    "aug": 8, "august": 8,
+    "sep": 9, "sept": 9, "september": 9,
+    "oct": 10, "october": 10,
+    "nov": 11, "november": 11,
+    "dec": 12, "december": 12,
 }
 
 
 def extract_expiry_date(frame):
     if frame is None:
-        return {
-            "raw_text": "",
-            "date": None
-        }
+        return {"raw_text": "", "date": None}
 
     processed_images = preprocess_for_ocr(frame)
-
     best_text = ""
 
     for image in processed_images:
@@ -111,7 +89,6 @@ def preprocess_for_ocr(frame):
     ])
 
     sharpened = cv2.filter2D(enlarged, -1, sharpen_kernel)
-
     blurred = cv2.GaussianBlur(sharpened, (3, 3), 0)
 
     _, otsu = cv2.threshold(
@@ -158,22 +135,18 @@ def clean_ocr_text(text):
         "bb": " ",
         "lot": " ",
         "batch": " ",
-
-        # Common OCR mistakes
+        "\\": "/",
+        "_": "-",
         "o": "0",
-        "O": "0",
         "l": "1",
-        "I": "1",
+        "i": "1",
         "|": "1",
     }
 
     for old, new in replacements.items():
         text = text.replace(old, new)
 
-    text = text.replace("\\", "/")
-    text = text.replace("_", "-")
     text = re.sub(r"\s+", " ", text)
-
     return text.strip()
 
 
@@ -192,25 +165,19 @@ def normalise_date(date_text):
     date_text = date_text.replace(".", "/")
     date_text = re.sub(r"\s+", " ", date_text)
 
-    parsed = parse_full_numeric_date(date_text)
+    parsers = [
+        parse_full_numeric_date,
+        parse_year_first_date,
+        parse_month_year_date,
+        parse_compact_month_year,
+        parse_text_month_date,
+    ]
 
-    if parsed:
-        return parsed.isoformat()
+    for parser in parsers:
+        parsed = parser(date_text)
 
-    parsed = parse_year_first_date(date_text)
-
-    if parsed:
-        return parsed.isoformat()
-
-    parsed = parse_month_year_date(date_text)
-
-    if parsed:
-        return parsed.isoformat()
-
-    parsed = parse_text_month_date(date_text)
-
-    if parsed:
-        return parsed.isoformat()
+        if parsed:
+            return parsed.isoformat()
 
     return None
 
@@ -219,10 +186,8 @@ def parse_full_numeric_date(date_text):
     formats = [
         "%d/%m/%Y",
         "%d-%m-%Y",
-        "%d.%m.%Y",
         "%d/%m/%y",
         "%d-%m-%y",
-        "%d.%m.%y",
         "%m/%d/%Y",
         "%m-%d-%Y",
         "%m/%d/%y",
@@ -246,7 +211,6 @@ def parse_year_first_date(date_text):
     formats = [
         "%Y/%m/%d",
         "%Y-%m-%d",
-        "%Y.%m.%d",
     ]
 
     for fmt in formats:
@@ -271,19 +235,19 @@ def parse_month_year_date(date_text):
     month = int(match.group(1))
     year = int(match.group(2))
 
-    if month < 1 or month > 12:
+    return build_month_year_date(month, year)
+
+
+def parse_compact_month_year(date_text):
+    match = re.fullmatch(r"(\d{2})(\d{2})", date_text)
+
+    if not match:
         return None
 
-    if year < 100:
-        year += 2000
+    month = int(match.group(1))
+    year = int(match.group(2))
 
-    last_day = calendar.monthrange(year, month)[1]
-    parsed = date(year, month, last_day)
-
-    if is_reasonable_expiry_date(parsed):
-        return parsed
-
-    return None
+    return build_month_year_date(month, year)
 
 
 def parse_text_month_date(date_text):
@@ -296,14 +260,7 @@ def parse_text_month_date(date_text):
         year = safe_int(year_text)
 
         if month and year:
-            if year < 100:
-                year += 2000
-
-            last_day = calendar.monthrange(year, month)[1]
-            parsed = date(year, month, last_day)
-
-            if is_reasonable_expiry_date(parsed):
-                return parsed
+            return build_month_year_date(month, year)
 
     if len(parts) == 3:
         day_text, month_text, year_text = parts
@@ -328,6 +285,22 @@ def parse_text_month_date(date_text):
     return None
 
 
+def build_month_year_date(month, year):
+    if month < 1 or month > 12:
+        return None
+
+    if year < 100:
+        year += 2000
+
+    last_day = calendar.monthrange(year, month)[1]
+    parsed = date(year, month, last_day)
+
+    if is_reasonable_expiry_date(parsed):
+        return parsed
+
+    return None
+
+
 def safe_int(value):
     try:
         return int(value)
@@ -337,5 +310,4 @@ def safe_int(value):
 
 def is_reasonable_expiry_date(parsed_date):
     current_year = date.today().year
-
     return current_year - 1 <= parsed_date.year <= current_year + 10

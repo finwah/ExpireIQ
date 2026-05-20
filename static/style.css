@@ -1227,3 +1227,13 @@ hr {
         gap: 10px;
     }
 }
+@media (min-width: 851px) {
+    .scanner-layout {
+        align-items: start;
+    }
+
+    .scanner-layout > .card:first-child {
+        position: sticky;
+        top: 110px;
+    }
+}
