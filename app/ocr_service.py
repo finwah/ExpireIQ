@@ -7,10 +7,11 @@ import numpy as np
 import pytesseract
 
 
-OCR_CONFIG = (
-    "--psm 8 "
-    "-c tessedit_char_whitelist=0123456789/-.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-)
+OCR_CONFIGS = [
+    "--psm 8 -c tessedit_char_whitelist=0123456789/",
+    "--psm 7 -c tessedit_char_whitelist=0123456789/",
+    "--psm 6 -c tessedit_char_whitelist=0123456789/",
+]
 
 
 DATE_PATTERNS = [
@@ -47,30 +48,33 @@ def extract_expiry_date(frame):
     best_text = ""
 
     for image in processed_images:
-        try:
-            text = pytesseract.image_to_string(
-                image,
-                config=OCR_CONFIG,
-                timeout=4
-            )
-        except RuntimeError:
-            continue
+        for config in OCR_CONFIGS:
+            try:
+                text = pytesseract.image_to_string(
+                    image,
+                    config=config,
+                    timeout=3
+                )
+            except RuntimeError:
+                continue
 
-        cleaned_text = clean_ocr_text(text)
+            cleaned_text = clean_ocr_text(text)
 
-        if len(cleaned_text) > len(best_text):
-            best_text = cleaned_text
+            print("OCR ATTEMPT:", cleaned_text)
 
-        date_text = find_date_in_text(cleaned_text)
+            if len(cleaned_text) > len(best_text):
+                best_text = cleaned_text
 
-        if date_text:
-            parsed_date = normalise_date(date_text)
+            date_text = find_date_in_text(cleaned_text)
 
-            if parsed_date:
-                return {
-                    "raw_text": cleaned_text,
-                    "date": parsed_date
-                }
+            if date_text:
+                parsed_date = normalise_date(date_text)
+
+                if parsed_date:
+                    return {
+                        "raw_text": cleaned_text,
+                        "date": parsed_date
+                    }
 
     return {
         "raw_text": best_text,
@@ -101,7 +105,9 @@ def preprocess_for_ocr(frame):
 
     cv2.imwrite("debug_ocr_crop.jpg", equalized)
 
-    return [equalized]
+    return [cropped,
+            enlarged,
+            equalized,]
 
 
 def clean_ocr_text(text):
