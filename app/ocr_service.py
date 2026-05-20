@@ -83,46 +83,53 @@ def preprocess_for_ocr(frame):
 
     height, width = gray.shape
 
-    crop_width = int(width * 0.45)
-    crop_height = int(height * 0.18)
+    crops = []
 
-    x1 = (width - crop_width) // 2
-    y1 = (height - crop_height) // 2
-
-    cropped = gray[
-        y1:y1 + crop_height,
-        x1:x1 + crop_width
-    ]
-
-    enlarged = cv2.resize(
-        cropped,
-        None,
-        fx=2,
-        fy=2,
-        interpolation=cv2.INTER_CUBIC
-    )
-
-    sharpen_kernel = np.array([
-        [0, -1, 0],
-        [-1, 5, -1],
-        [0, -1, 0]
+    # Large centre crop
+    crops.append(gray[
+        int(height * 0.15):int(height * 0.85),
+        int(width * 0.08):int(width * 0.92)
     ])
 
-    sharpened = cv2.filter2D(enlarged, -1, sharpen_kernel)
+    # Medium centre crop
+    crops.append(gray[
+        int(height * 0.25):int(height * 0.75),
+        int(width * 0.15):int(width * 0.85)
+    ])
 
-    _, thresholded = cv2.threshold(
-        sharpened,
-        0,
-        255,
-        cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
+    # Full grayscale fallback
+    crops.append(gray)
 
-    inverted = cv2.bitwise_not(thresholded)
+    processed_images = []
 
-    return [
-        thresholded,
-        inverted,
-    ]
+    for crop in crops:
+        enlarged = cv2.resize(
+            crop,
+            None,
+            fx=1.6,
+            fy=1.6,
+            interpolation=cv2.INTER_CUBIC
+        )
+
+        sharpen_kernel = np.array([
+            [0, -1, 0],
+            [-1, 5, -1],
+            [0, -1, 0]
+        ])
+
+        sharpened = cv2.filter2D(enlarged, -1, sharpen_kernel)
+
+        _, thresholded = cv2.threshold(
+            sharpened,
+            0,
+            255,
+            cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+
+        processed_images.append(sharpened)
+        processed_images.append(thresholded)
+
+    return processed_images[:4]
 
 
 def clean_ocr_text(text):
