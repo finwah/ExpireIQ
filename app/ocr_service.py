@@ -98,31 +98,32 @@ def preprocess_for_ocr(frame):
 
     height, width = gray.shape
 
-    # Crop around the expiry area while leaving enough room for aiming variation.
-    expiry_crop = gray[
-        int(height * 0.18):int(height * 0.60),
-        int(width * 0.10):int(width * 0.85)
+    # Use almost full frame.
+    # Let OCR find text instead of us guessing location.
+    cropped = gray[
+        int(height * 0.08):int(height * 0.92),
+        int(width * 0.08):int(width * 0.92)
     ]
 
     enlarged = cv2.resize(
-        expiry_crop,
+        cropped,
         None,
-        fx=2,
-        fy=2,
+        fx=1.8,
+        fy=1.8,
         interpolation=cv2.INTER_CUBIC
     )
 
     equalized = cv2.equalizeHist(enlarged)
 
-    blurred = cv2.GaussianBlur(equalized, (3, 3), 0)
-
-    cv2.imwrite("debug_ocr_crop.jpg", blurred)
+    cv2.imwrite(
+        "debug_ocr_crop.jpg",
+        equalized
+    )
 
     return [
-        expiry_crop,
+        cropped,
         enlarged,
-        blurred,
-        gray
+        equalized
     ]
 
 
